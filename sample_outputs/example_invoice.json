@@ -1,0 +1,50 @@
+{
+  "document_name": "sample_invoice.jpg",
+  "document_type": "invoice",
+  "processing_status": "PASS",
+  "overall_confidence": null,
+  "file_validation": {
+    "file_type": "image/jpeg",
+    "is_supported": true,
+    "is_readable": true,
+    "page_count": 1,
+    "status": "PASS"
+  },
+  "extracted_data": {
+    "document_type": "invoice",
+    "document_title": null,
+    "entity_name": null,
+    "statement_period": null,
+    "currency": "USD",
+    "header_fields": {},
+    "invoice_number": null,
+    "invoice_date": null,
+    "vendor_name": null,
+    "customer_name": null,
+    "subtotal": null,
+    "tax_amount": null,
+    "discount": null,
+    "total_amount": null,
+    "line_items": []
+  },
+  "validation": {
+    "checks": [
+      {
+        "name": "invoice_total_check",
+        "formula": "subtotal + tax_amount - discount",
+        "operands": {
+          "subtotal": null,
+          "tax_amount": null,
+          "discount": 0.0
+        },
+        "calculated_value": null,
+        "reported_value": null,
+        "variance": null,
+        "status": "NOT_APPLICABLE",
+        "message": "Required source fields are not available."
+      }
+    ],
+    "overall_status": "NOT_APPLICABLE",
+    "issues": []
+  }
+}

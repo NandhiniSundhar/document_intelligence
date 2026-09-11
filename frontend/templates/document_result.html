@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Document Result</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<div class="container">
+  <a href="/">← Dashboard</a>
+  <h1 id="title">Document Result</h1>
+
+  <div id="summary" class="grid"></div>
+
+  <section class="card">
+    <h2>Extracted Data</h2>
+    <div id="extracted"></div>
+  </section>
+
+  <section class="card">
+    <h2>Financial Validation</h2>
+    <div id="validation"></div>
+  </section>
+
+  <section class="card">
+    <h2>Raw Structured JSON</h2>
+    <pre id="raw"></pre>
+  </section>
+</div>
+
+<script>
+const name = decodeURIComponent(location.pathname.split("/").slice(2).join("/"));
+
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+
+function renderValue(value) {
+  if (value === null || value === undefined) return '<span class="missing">NULL / NOT FOUND</span>';
+  if (typeof value === "object") return '<pre class="inline-json">' + esc(JSON.stringify(value, null, 2)) + '</pre>';
+  return esc(value);
+}
+
+function renderObject(obj) {
+  return '<div class="kv">' + Object.entries(obj || {}).map(([k,v]) =>
+    `<div class="kv-row"><strong>${esc(k)}</strong><span>${renderValue(v)}</span></div>`
+  ).join("") + '</div>';
+}
+
+async function load() {
+  const r = await fetch("/api/v1/documents/" + encodeURIComponent(name));
+  const d = await r.json();
+  if (!r.ok) {
+    document.getElementById("title").textContent = "Error";
+    document.getElementById("raw").textContent = JSON.stringify(d, null, 2);
+    return;
+  }
+
+  document.getElementById("title").textContent = d.document_name;
+  document.getElementById("summary").innerHTML = `
+    <div class="metric"><b>Type</b><span>${esc(d.document_type)}</span></div>
+    <div class="metric"><b>Status</b><span class="${d.processing_status === 'PASS' ? 'pass':'fail'}">${esc(d.processing_status)}</span></div>
+    <div class="metric"><b>Pages</b><span>${esc(d.file_validation.page_count)}</span></div>
+    <div class="metric"><b>OCR</b><span>${d.processing_metadata.ocr_used ? 'Used':'Native text'}</span></div>
+  `;
+
+  const e = d.extracted_data;
+  let html = "";
+  for (const [k,v] of Object.entries(e)) {
+    if (k === "line_items") continue;
+    html += `<div class="kv-row"><strong>${esc(k)}</strong><span>${renderValue(v)}</span></div>`;
+  }
+  if (e.line_items && e.line_items.length) {
+    html += "<h3>Tables / Line Items</h3><table><thead><tr>";
+    const cols = [...new Set(e.line_items.flatMap(x => Object.keys(x)))];
+    html += cols.map(c => `<th>${esc(c)}</th>`).join("");
+    html += "</tr></thead><tbody>";
+    for (const row of e.line_items) {
+      html += "<tr>" + cols.map(c => `<td>${renderValue(row[c])}</td>`).join("") + "</tr>";
+    }
+    html += "</tbody></table>";
+  }
+  document.getElementById("extracted").innerHTML = html;
+
+  document.getElementById("validation").innerHTML =
+    `<h3>Overall: <span class="${d.validation.overall_status === 'PASS' ? 'pass':'fail'}">${esc(d.validation.overall_status)}</span></h3>` +
+    d.validation.checks.map(c => `
+      <div class="check ${c.status === 'PASS' ? 'ok' : c.status === 'FAIL' ? 'bad' : 'na'}">
+        <b>${esc(c.name)}</b>
+        <span>${esc(c.status)}</span>
+        <small>Formula: ${esc(c.formula)}</small>
+        <small>Calculated: ${renderValue(c.calculated_value)} | Reported: ${renderValue(c.reported_value)} | Variance: ${renderValue(c.variance)}</small>
+        <small>Operands: ${esc(JSON.stringify(c.operands))}</small>
+      </div>`).join("");
+
+  document.getElementById("raw").textContent = JSON.stringify(d, null, 2);
+}
+load();
+</script>
+</body>
+</html>

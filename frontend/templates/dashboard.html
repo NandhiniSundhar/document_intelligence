@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Document Intelligence Dashboard</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Document Intelligence</h1>
+    <p>Financial document extraction, validation and evidence dashboard</p>
+  </header>
+
+  <section class="card">
+    <h2>Process Document</h2>
+    <form id="uploadForm">
+      <label>Document type</label>
+      <select id="documentType" required>
+        <option value="invoice">Invoice</option>
+        <option value="balance_sheet">Balance Sheet</option>
+        <option value="profit_and_loss">Profit & Loss</option>
+        <option value="cash_flow_statement">Cash Flow Statement</option>
+      </select>
+
+      <label>PDF / JPG / PNG</label>
+      <input id="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+      <button type="submit">Process Document</button>
+    </form>
+    <pre id="message"></pre>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>Processed Documents</h2>
+      <button onclick="loadDocuments()">Refresh</button>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Processed</th><th>Open</th></tr></thead>
+      <tbody id="documents"></tbody>
+    </table>
+  </section>
+</div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
